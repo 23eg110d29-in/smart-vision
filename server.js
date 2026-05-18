@@ -14,8 +14,9 @@ connectDB();
 // Middleware
 app.use(cors());
 app.use(express.json());
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files statically (use /tmp in serverless production)
+const uploadDir = process.env.NODE_ENV === 'production' ? require('os').tmpdir() : path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadDir));
 
 // Routes
 app.use('/api/images', imageRoutes);

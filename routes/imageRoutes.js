@@ -9,10 +9,13 @@ const {
 } = require('../controllers/imageController');
 const multer = require('multer');
 
-// Configure multer for local storage
+const os = require('os');
+
+// Configure multer for storage (handling local disk vs serverless /tmp)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/')
+    const uploadDir = process.env.NODE_ENV === 'production' ? os.tmpdir() : 'uploads/';
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
