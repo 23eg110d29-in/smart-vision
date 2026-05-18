@@ -19,6 +19,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/images', imageRoutes);
+app.get('/', (req, res) => {
+  res.json({ message: "Smart Vision Analyzer API is active and running!" });
+});
 
 // Error Middleware
 app.use(errorHandler);
