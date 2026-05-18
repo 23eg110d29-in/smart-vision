@@ -8,29 +8,41 @@ const path = require('path');
 // @route   POST /api/images/upload
 // @access  Public
 const uploadImage = asyncHandler(async (req, res) => {
-  if (!req.file) {
-    res.status(400);
-    throw new Error('No image uploaded');
+  try {
+    if (!req.file) {
+      res.status(400);
+      throw new Error('No image uploaded');
+    }
+
+    const imagePath = req.file.path;
+    const mimeType = req.file.mimetype;
+    
+    console.log('Multer stage success. File path:', imagePath);
+    
+    // Call Gemini API
+    const aiResult = await analyzeImageWithGemini(imagePath, mimeType);
+    console.log('Gemini success:', aiResult);
+
+    // Save to DB
+    const newAnalysis = await ImageAnalysis.create({
+      image: req.file.filename,
+      title: aiResult.title || 'Untitled',
+      detectedObjects: aiResult.detectedObjects || [],
+      category: aiResult.category || 'Uncategorized',
+      aiDescription: aiResult.aiDescription || '',
+      tags: aiResult.tags || [],
+      confidence: aiResult.confidence || 'Medium'
+    });
+
+    res.status(201).json(newAnalysis);
+  } catch (err) {
+    console.error('SERVER DIAGNOSTIC ERROR:', err);
+    res.status(500).json({
+      message: err.message,
+      stack: err.stack,
+      hint: "Check MongoDB credentials, Gemini API key, or whitelisting settings."
+    });
   }
-
-  const imagePath = req.file.path;
-  const mimeType = req.file.mimetype;
-  
-  // Call Gemini API
-  const aiResult = await analyzeImageWithGemini(imagePath, mimeType);
-
-  // Save to DB
-  const newAnalysis = await ImageAnalysis.create({
-    image: req.file.filename,
-    title: aiResult.title || 'Untitled',
-    detectedObjects: aiResult.detectedObjects || [],
-    category: aiResult.category || 'Uncategorized',
-    aiDescription: aiResult.aiDescription || '',
-    tags: aiResult.tags || [],
-    confidence: aiResult.confidence || 'Medium'
-  });
-
-  res.status(201).json(newAnalysis);
 });
 
 // @desc    Get all analyses
